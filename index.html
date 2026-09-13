@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Evita el zoom accidental al tocar botones o campos de texto -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Compatibilidad para iPhone (modo App nativa sin barra de Safari) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hábitos">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3209/3209265.png">
+
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff4747">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Hábitos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Chart.js para las gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+    
+
+        <!-- BARRA SUPERIOR CON SELECCIÓN DE TABLERO Y FECHA -->
+        <header class="top-bar">
+            <!-- Selector de Tablero / Proyecto (Estilo archivos de Word) -->
+            <div class="workspace-selector">
+                <label>📁 Espacio:</label>
+                <!-- En la barra superior (top-bar), agrega el botón -->
+                <button class="btn btn-secondary btn-sm" onclick="abrirModalTema()">🎨 Personalizar Colores</button>
+                <select id="selectTablero" onchange="cambiarTablero()"></select>
+                <button class="btn btn-secondary btn-sm" onclick="crearNuevoTablero()">+ Nuevo Tablero</button>
+                <button class="btn btn-secondary btn-sm" onclick="renombrarTableroActual()">✏️</button>
+                <button class="btn btn-secondary btn-sm" onclick="eliminarTableroActual()">🗑️</button>
+            </div>
+
+            <!-- Selector de Año y Mes -->
+            <div class="date-selectors">
+                <label>Año: </label>
+                <select id="selectAño" onchange="actualizarTodo()"></select>
+                <label>Mes: </label>
+                <select id="selectMes" onchange="actualizarTodo()"></select>
+            </div>
+
+            <h2 id="tituloMesAño">Cargando...</h2>
+        </header>
+
+    <!-- 2. SECCIÓN SUPERIOR: GRÁFICAS DE PROGRESO (SEMANAL Y MENSUAL) -->
+    <section class="top-charts-grid">
+        <!-- Izquierda: Semanal -->
+        <div class="card chart-card-sm">
+            <h3>Progreso Semanal</h3>
+            <div class="chart-wrapper">
+                <canvas id="chartSemanal"></canvas>
+            </div>
+        </div>
+
+        <!-- Derecha: Mensual + Contador de Meta -->
+        <div class="card chart-card-lg">
+            <div class="card-header-meta">
+                <h3>Progreso General del Mes</h3>
+                <div class="meta-container">
+                    <label for="fechaMeta">🎯 Fecha Meta:</label>
+                    <input type="date" id="fechaMeta" onchange="guardarYCalcularMeta()">
+                    <span id="badgeContador" class="badge-contador">Selecciona una fecha</span>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="chartMensual"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. SECCIÓN MEDIA: TABLA DE HÁBITOS -->
+    <section class="card habits-section">
+        <div class="habits-header-bar">
+            <h3>Registro de Hábitos</h3>
+            <div class="habits-actions">
+                <button class="btn btn-secondary" onclick="toggleModoEdicion()">✏️ Editar Hábitos</button>
+                <button class="btn btn-primary" onclick="agregarHabito()">+ Nuevo Hábito</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="habits-table">
+                <thead>
+                    <tr id="headerDias">
+                        <th class="col-habito">Hábito</th>
+                        <!-- Días 1 a 28/30/31 se insertan dinámicamente -->
+                    </tr>
+                </thead>
+                <tbody id="listaHabitosBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 4. SECCIÓN INFERIOR: GRÁFICA DE PROGRESO DIARIO -->
+    <section class="card daily-chart-section">
+        <h3>Cumplimiento Diario (%)</h3>
+        <div class="chart-wrapper-daily">
+            <canvas id="chartDiario"></canvas>
+        </div>
+    </section>
+
+</div>
+
+<!-- VENTANA MODAL DE PERSONALIZACIÓN DE COLORES (Colócala antes de </body>) -->
+<div id="modalTema" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3>🎨 Personalizar Apariencia</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
+            Ajusta los colores a tu gusto. Se aplicarán a tablas, gráficas y fondos.
+        </p>
+
+        <!-- Temas Rápidos Predefinidos -->
+        <label style="font-size: 13px; font-weight: bold;">Temas Rápidos:</label>
+        <div class="preset-themes">
+            <button class="preset-btn" style="background: #ff4747;" onclick="aplicarTemaPredefinido('#ff4747', '#121212', '#1e1e1e')">Rojo Neón</button>
+            <button class="preset-btn" style="background: #0077ff;" onclick="aplicarTemaPredefinido('#0077ff', '#0b132b', '#1c2541')">Azul Cyber</button>
+            <button class="preset-btn" style="background: #10b981;" onclick="aplicarTemaPredefinido('#10b981', '#064e3b', '#022c22')">Verde Esmeralda</button>
+            <button class="preset-btn" style="background: #a855f7;" onclick="aplicarTemaPredefinido('#a855f7', '#0f0f1a', '#1a1a2e')">Violeta Dark</button>
+            <button class="preset-btn" style="background: #e11d48; color: #333;" onclick="aplicarTemaPredefinido('#e11d48', '#f8fafc', '#ffffff')">Claro / Rose</button>
+        </div>
+
+        <hr style="border-color: var(--border-color); margin: 16px 0;">
+
+        <!-- Selector Personalizado Tono por Tono -->
+        <div class="color-group">
+            <label for="inputColorAcento">Color Principal / Cuadrículas / Gráficas:</label>
+            <input type="color" id="inputColorAcento" onchange="actualizarColoresDesdeInputs()">
+        </div>
+
+        <div class="color-group">
+            <label for="inputColorFondo">Fondo Principal:</label>
+            <input type="color" id="inputColorFondo" onchange="actualizarColoresDesdeInputs()">
+        </div>
+
+        <div class="color-group">
+            <label for="inputColorTarjeta">Fondo Tarjetas y Tablas:</label>
+            <input type="color" id="inputColorTarjeta" onchange="actualizarColoresDesdeInputs()">
+        </div>
+            <!-- Copia de seguridad dentro de la ventana modal -->
+<hr style="border-color: var(--border-color); margin: 16px 0;">
+<label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 8px;">Copia de Seguridad:</label>
+<div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button class="btn btn-secondary btn-sm" onclick="exportarDatos()">💾 Descargar Copia</button>
+    <label class="btn btn-secondary btn-sm" style="cursor: pointer; display: inline-block;">
+        📂 Cargar Copia
+        <input type="file" accept=".json" onchange="importarDatos(event)" style="display: none;">
+    </label>
+</div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-secondary btn-sm" onclick="restablecerTemaPorDefecto()">Restablecer</button>
+            <button class="btn btn-primary btn-sm" onclick="cerrarModalTema()">Guardar y Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- CARGA DE ARCHIVOS JAVASCRIPT MODULARES -->
+<script src="js/app.js"></script>
+<script src="js/tablaHabitos.js"></script>
+<script src="js/graficaMensual.js"></script>
+<script src="js/graficaSemanal.js"></script>
+<script src="js/graficaDiaria.js"></script>
+<script src="js/contadorMeta.js"></script>
+<!-- Cargar el script de control de temas -->
+<script src="js/tema.js"></script>
+
+
+</body>
+</html>
